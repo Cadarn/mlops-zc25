@@ -8,7 +8,7 @@ from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import root_mean_squared_error
 
-HPO_EXPERIMENT_NAME = "random-forest-hyperopt2"
+HPO_EXPERIMENT_NAME = "random-forest-hyperopt"
 EXPERIMENT_NAME = "random-forest-best-models"
 RF_PARAMS = ['max_depth', 'n_estimators', 'min_samples_split', 'min_samples_leaf', 'random_state']
 
@@ -28,10 +28,11 @@ def train_and_log_model(data_path, params):
     X_test, y_test = load_pickle(os.path.join(data_path, "test.pkl"))
 
     with mlflow.start_run():
+        new_params = {}
         for param in RF_PARAMS:
-            params[param] = int(params[param])
+            new_params[param] = int(params[param])
 
-        rf = RandomForestRegressor(**params)
+        rf = RandomForestRegressor(**new_params)
         rf.fit(X_train, y_train)
 
         # Evaluate model on the validation and test sets
@@ -74,12 +75,13 @@ def run_register_model(data_path: str, top_n: int):
         experiment_ids=experiment.experiment_id,
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=5,
-        order_by=["metrics.rmse ASC"]
-    )[0]
+        order_by=["metrics.test_rmse ASC"]
+        )[0]
 
     # Register the best model
     model_uri = f"runs:/{best_run.info.run_id}/model"
-    mlflow.register_model(model_uri=model_uri, name=EXPERIMENT_NAME)
+    mlflow.register_model(model_uri=model_uri, name="best-nyc-taxi-regressor")
+    print(f"Registered model {model_uri} as 'best-nyc-taxi-regressor'")
 
 
 if __name__ == '__main__':
