@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import mlflow
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn import linear_model
@@ -51,6 +52,21 @@ X_train = dv.fit_transform(generate_feature_dicts(train_df, categorical+numerica
 y_train = train_df[target].values
 
 regr = linear_model.LinearRegression()
+
+#Q6
+EXPERIMENT_NAME = "WEEK3_taxi_duration"
+REGISTERED_MODEL_NAME = "yellow-taxi-duration-predictor" # This name will be used in the MLflow Model Registry
+
+
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_experiment(EXPERIMENT_NAME)
+mlflow.sklearn.autolog(
+    registered_model_name=REGISTERED_MODEL_NAME,
+    log_input_examples=True,  # Recommended: logs a sample of input data for the model
+    log_model_signatures=True # Recommended: logs the model's input and output schema
+)
+
+# Now, when you fit the model, MLflow will automatically log and register it.
 regr.fit(X_train, y_train)
 
-print(regr)
+print(f"Model intercept: {regr.intercept_}") # Displaying the intercept after training
